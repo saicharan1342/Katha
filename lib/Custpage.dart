@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:kt/Addtrans.dart';
 import 'package:kt/Custdepage.dart';
 import 'package:kt/Report.dart';
 import 'package:kt/SaveCust.dart';
@@ -58,124 +59,89 @@ class _CustpageState extends State<Custpage> {
     DropdownMenuItem(child: Text("You received"), value: "Credit"),
     DropdownMenuItem(child: Text("You paid"), value: "Debit"),
   ];
-  showdia(BuildContext context) {
-     showDialog(context: context, builder: (context) {
-      return AlertDialog(
-        content: SingleChildScrollView(
-          child: Form(
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: amcon,
-                  decoration: const InputDecoration(label: Text('Amount')),
-                  keyboardType: TextInputType.phone,
-                  validator: (value){
-                    if(value!.isEmpty){
-                      return 'Enter amount';
-                    }
-                    return null;
-                  },
-                  autovalidateMode: AutovalidateMode.always,
-                ),
-                TextFormField(
-                  controller: decon,
-                  decoration: const InputDecoration(label: Text('Details')),
-                ),
-                DropdownButtonFormField(
-                  value: 'Select',
-                  items: menuItems,
-                  validator: (value){
-                    if(value=='Select'){
-                      return 'Select type';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      type = value;
-                    });
-                  },
-                  autovalidateMode: AutovalidateMode.always,
-                ),
-                SizedBox(
-                  height: 15,
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  onPressed: () async => await _selectDateTime(context),
-                  child: Text(DateFormat('dd-MM-yyyy HH:mm').format(selectedDateTime)),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
+  void showdia(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AddTransactionDialog(
+        amcon: amcon,
+        decon: decon,
+        onTypeChanged: (value) {
+          setState(() {
+            type = value;
+          });
+        },
+        onDateTimeChanged: (value) {
+          setState(() {
+            selectedDateTime = value;
+          });
+        },
+        onSubmit: () {
+          setState(() {
+            setState(() {
 
-                        if (type == 'Credit') {
-                          widget.customer.balance -= double.parse(amcon.text);
-                        }
-                        else {
-                          widget.customer.balance += double.parse(amcon.text);
-                        }
-                        // Create a new list with updated transactions
-                        List<Transactions> updatedTransactions = List.from(
-                            widget.customer.trans);
-                        updatedTransactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-                        double balance2=0,amou=double.parse(amcon.text);
-                        for(int i=0;i<updatedTransactions.length;i++){
-                          if(updatedTransactions[i].dateTime<selectedDateTime.microsecondsSinceEpoch){
-                            balance2=updatedTransactions[i].balance;
-                            break;
-                          }
-                        }
-                        if(type=='Credit'){
-                          balance2-=double.parse(amcon.text);
-                        }
-                        else{
-                          balance2+=double.parse(amcon.text);
-                        }
-                        updatedTransactions.add(
-                          Transactions(
-                            amount: double.parse(amcon.text),
-                            type: type,
-                            dateTime: selectedDateTime.microsecondsSinceEpoch,
-                            details: decon.text,
-                            balance: balance2,
-                          ),
-                        );
-                        for(int i=0;i<updatedTransactions.length;i++){
-                          if(updatedTransactions[i].dateTime>selectedDateTime.microsecondsSinceEpoch){
-                            if(type=='Credit'){
-                              updatedTransactions[i].balance-=amou;
-                            }
-                            else{
-                              updatedTransactions[i].balance+=amou;
-                            }
-                          }
-                        }
+              if (type == 'Credit') {
+                widget.customer.balance -= double.parse(amcon.text);
+              }
+              else {
+                widget.customer.balance += double.parse(amcon.text);
+              }
+              // Create a new list with updated transactions
+              List<Transactions> updatedTransactions = List.from(
+                  widget.customer.trans);
+              updatedTransactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+              double balance2=0,amou=double.parse(amcon.text);
+              for(int i=0;i<updatedTransactions.length;i++){
+                if(updatedTransactions[i].dateTime<selectedDateTime.microsecondsSinceEpoch){
+                  balance2=updatedTransactions[i].balance;
+                  break;
+                }
+              }
+              if(type=='Credit'){
+                balance2-=double.parse(amcon.text);
+              }
+              else{
+                balance2+=double.parse(amcon.text);
+              }
+              updatedTransactions.add(
+                Transactions(
+                  amount: double.parse(amcon.text),
+                  type: type,
+                  dateTime: selectedDateTime.microsecondsSinceEpoch,
+                  details: decon.text,
+                  balance: balance2,
+                ),
+              );
+              for(int i=0;i<updatedTransactions.length;i++){
+                if(updatedTransactions[i].dateTime>selectedDateTime.microsecondsSinceEpoch){
+                  if(type=='Credit'){
+                    updatedTransactions[i].balance-=amou;
+                  }
+                  else{
+                    updatedTransactions[i].balance+=amou;
+                  }
+                }
+              }
 
-                        // Update the state with the new list
-                        widget.customer.trans = updatedTransactions;
-                        // Save updated customer details
+              // Update the state with the new list
+              widget.customer.trans = updatedTransactions;
+              // Save updated customer details
 
-                        CustomerStorage.saveCustomerDetails(widget.customer);
-                        amcon.clear();
-                        decon.clear();
-                    });
-                    Navigator.pop(context);
-                  },
-                  child: Text("Submit"),
-                )
+              CustomerStorage.saveCustomerDetails(widget.customer);
+              amcon.clear();
+              decon.clear();
+            });
 
-              ],
-            ),
-          ),
-        ),
-      );
-    });
+            // Update customer details, save to storage, etc.
+            // Clear text controllers
+            amcon.clear();
+            decon.clear();
+          });
+          Navigator.pop(context); // Close the dialog after submission
+        },
+      ),
+    );
   }
+
 
 
   @override
