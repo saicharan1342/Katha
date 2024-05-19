@@ -162,7 +162,6 @@ class _ReportPageState extends State<ReportPage> {
       ),
     );
     Directory generalDownloadDir = Directory('/storage/emulated/0/Download');
-    final downloadsDirectory = await getDownloadsDirectory();
     final file = File('${generalDownloadDir.path}/KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf');
     await file.writeAsBytes(await pdf.save());
     ScaffoldMessenger.of(context).showSnackBar(

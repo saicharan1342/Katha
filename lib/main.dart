@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kt/Dashboard.dart';
+import 'package:kt/Login.dart';
+import 'package:kt/Signup.dart';
 
 void main() {
   runApp(const MyApp());
