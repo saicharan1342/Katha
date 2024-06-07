@@ -58,6 +58,7 @@ class CustomerStorage {
             trans: transactions,
             credit: credit.toString(),
             debit: debit.toString(),
+            edited: DateTime.now().microsecondsSinceEpoch,
           ));
         }
       }
@@ -77,6 +78,18 @@ class CustomerStorage {
       await prefs.remove(key);
     } catch (e) {
       print('Error clearing customer details: $e');
+    }
+  }
+  static Future<void> clearAllCustomers() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final List<String> keys = prefs.getKeys().where((key) => key.startsWith(_keyPrefix)).toList();
+
+      for (String key in keys) {
+        await prefs.remove(key);
+      }
+    } catch (e) {
+      print('Error clearing all customer details: $e');
     }
   }
 }

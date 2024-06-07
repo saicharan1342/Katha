@@ -8,6 +8,7 @@ class Customers {
   late List<Transactions> trans; // Make sure to initialize this properly
   late var credit;
   late var debit;
+  late int edited;
 
   Customers({
     required this.name,
@@ -16,7 +17,7 @@ class Customers {
     this.balance=0,
     List<Transactions> trans = const [],
     this.credit=0,
-    this.debit=0// Initialize trans as an empty list
+    this.debit=0,
   }) : trans = trans;
 
   Customers.withTransaction({
@@ -27,5 +28,6 @@ class Customers {
     required this.trans,
     required this.credit,
     required this.debit,
+    required this.edited
   });
 }

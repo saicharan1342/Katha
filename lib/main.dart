@@ -3,7 +3,14 @@ import 'package:kt/Dashboard.dart';
 import 'package:kt/Login.dart';
 import 'package:kt/Signup.dart';
 
-void main() {
+import 'package:flutter_downloader/flutter_downloader.dart';
+
+Future<void> main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await FlutterDownloader.initialize(
+  //     debug: true, // optional: set to false to disable printing logs to console (default: true)
+  //     ignoreSsl: true // option: set to false to disable working with http links (default: false)
+  // );
   runApp(const MyApp());
 }
 

@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter_downloader/flutter_downloader.dart';
 
 
 class ReportPage extends StatefulWidget {
@@ -26,8 +27,8 @@ class _ReportPageState extends State<ReportPage> {
 
 
 
-  DateTime startDateTime = DateTime.now();
-  DateTime endDateTime = DateTime.now();
+  DateTime startDateTime = DateTime.now().toLocal().subtract(Duration(hours:DateTime.now().hour,minutes: DateTime.now().minute ));
+  DateTime endDateTime = DateTime.now().toLocal().add(Duration(days: 1)).subtract(Duration(hours:DateTime.now().hour,minutes: DateTime.now().minute ));
   Future<void> _selectDateTime(BuildContext context, bool isStartDateTime) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -36,31 +37,24 @@ class _ReportPageState extends State<ReportPage> {
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(isStartDateTime ? startDateTime : endDateTime),
-      );
-      if (pickedTime != null) {
         setState(() {
           if (isStartDateTime) {
             startDateTime = DateTime(
               pickedDate.year,
               pickedDate.month,
               pickedDate.day,
-              pickedTime.hour,
-              pickedTime.minute,
+              00,
+              00
             );
           } else {
             endDateTime = DateTime(
               pickedDate.year,
               pickedDate.month,
               pickedDate.day,
-              pickedTime.hour,
-              pickedTime.minute,
             );
           }
         });
-      }
+
     }
   }
   List<Transactions> t=[];
@@ -164,6 +158,15 @@ class _ReportPageState extends State<ReportPage> {
     Directory generalDownloadDir = Directory('/storage/emulated/0/Download');
     final file = File('${generalDownloadDir.path}/KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf');
     await file.writeAsBytes(await pdf.save());
+    // final fileUri = Uri.file('${generalDownloadDir!.path}/KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf');
+    // final taskId = await FlutterDownloader.enqueue(
+    //   url: 'data:application/pdf;base64,${base64Encode(await pdf.save())}',
+    //   savedDir: generalDownloadDir.path,
+    //   fileName: 'KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf',
+    //   showNotification: true,
+    //   openFileFromNotification: true,
+    // );
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Pdf saved at ${generalDownloadDir.path}'),
@@ -171,7 +174,7 @@ class _ReportPageState extends State<ReportPage> {
     );
 
     // Optionally, you can print the path to the saved PDF file
-    print('PDF saved to: ${file.path}');
+    // print('PDF saved to: ${file.path}');
   }
 
 
@@ -187,57 +190,99 @@ class _ReportPageState extends State<ReportPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Customer Name: ${widget.customer.name}',
-                style: TextStyle(fontSize: 25),
-              ),
-              Text(
-                'Phone Number: ${widget.customer.phone}',
-                style: TextStyle(fontSize: 25),
-              ),
-              SizedBox(height: 10), // Adds some spacing between the previous Text widgets and the Row
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('Start Date', style: TextStyle(fontSize: 20)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Customer Name: ${widget.customer.name}',
+              style: TextStyle(fontSize: 25),
+            ),
+            Text(
+              'Phone Number: ${widget.customer.phone}',
+              style: TextStyle(fontSize: 25),
+            ),
+            SizedBox(height: 10), // Adds some spacing between the previous Text widgets and the Row
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('Start Date', style: TextStyle(fontSize: 20)),
+                ),
+                Expanded(child: SizedBox()),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('End Date', style: TextStyle(fontSize: 20)),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.only(left: 5),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      shape:RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        side: BorderSide(color: Colors.black)
+                      ),
+                      backgroundColor: Colors.white
+                    ),
+                    onPressed: () {
+                      _selectDateTime(context, true);
+                    },
+                    child: Text(DateFormat('dd-MM-yyyy').format(startDateTime)),
                   ),
-                  SizedBox(width: 140,),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('End Date', style: TextStyle(fontSize: 20)),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.only(left: 5),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
+                ),
+                Expanded(child: SizedBox()),
+                Container(
+                  padding: EdgeInsets.only(right: 5),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
                         shape:RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(0),
-                          side: BorderSide(color: Colors.black)
+                            side: BorderSide(color: Colors.black)
                         ),
                         backgroundColor: Colors.white
-                      ),
-                      onPressed: () {
-                        _selectDateTime(context, true);
-                      },
-                      child: Text(DateFormat('dd-MM-yyyy HH:mm').format(startDateTime)),
                     ),
+                    onPressed: () {
+                      _selectDateTime(context, false);
+                    },
+                    child: Text(DateFormat('dd-MM-yyyy').format(endDateTime)),
                   ),
-                  SizedBox(
-                    width: 23,
-                  ),
-                  Container(
-                    padding: EdgeInsets.only(right: 5),
-                    child: ElevatedButton(
+                ),
+              ],
+            ),
+            SizedBox(height: 10,),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.only(left: 5,right: 1),
+                  child: ElevatedButton(
+                      onPressed: (){
+                        setState(() {
+                          t.clear();
+                          for (int i = 0; i < widget.customer.trans.length; i++) {
+                            if (widget.customer.trans[i].dateTime>=(startDateTime.microsecondsSinceEpoch) &&
+                                DateTime.fromMicrosecondsSinceEpoch(widget.customer.trans[i].dateTime).isBefore(endDateTime)) {
+                              t.add(widget.customer.trans[i]);
+                            }
+                          }
+                          int i;
+                          for( i = 0; i < widget.customer.trans.length; i++){
+                            if(DateTime.fromMicrosecondsSinceEpoch(widget.customer.trans[i].dateTime).isBefore(startDateTime)){
+                              break;
+                            }
+                          }
+                          if(i>=widget.customer.trans.length-1){
+                            op=0;
+                          }
+                          else{
+                            op=widget.customer.trans[i+1].balance;
+                          }
+        
+                        });
+                      },
                       style: ElevatedButton.styleFrom(
                           shape:RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(0),
@@ -245,56 +290,13 @@ class _ReportPageState extends State<ReportPage> {
                           ),
                           backgroundColor: Colors.white
                       ),
-                      onPressed: () {
-                        _selectDateTime(context, false);
-                      },
-                      child: Text(DateFormat('dd-MM-yyyy HH:mm').format(endDateTime)),
-                    ),
+                      child: Text('Get')
                   ),
-                ],
-              ),
-              SizedBox(height: 10,),
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.only(left: 5),
-                    child: ElevatedButton(
-                        onPressed: (){
-                          setState(() {
-                            t.clear();
-                            for (int i = 0; i < widget.customer.trans.length; i++) {
-                              if (DateTime.fromMicrosecondsSinceEpoch(widget.customer.trans[i].dateTime).isAfter(startDateTime) &&
-                                  DateTime.fromMicrosecondsSinceEpoch(widget.customer.trans[i].dateTime).isBefore(endDateTime)) {
-                                t.add(widget.customer.trans[i]);
-                              }
-                            }
-                            int i;
-                            for( i = 0; i < widget.customer.trans.length; i++){
-                              if(DateTime.fromMicrosecondsSinceEpoch(widget.customer.trans[i].dateTime).isBefore(startDateTime)){
-                                break;
-                              }
-                            }
-                            if(i>=widget.customer.trans.length-1){
-                              op=0;
-                            }
-                            else{
-                              op=widget.customer.trans[i+1].balance;
-                            }
-
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                            shape:RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(0),
-                                side: BorderSide(color: Colors.black)
-                            ),
-                            backgroundColor: Colors.white
-                        ),
-                        child: Text('Get')
-                    ),
-                  ),
-                  SizedBox(width: 180,),
-                  ElevatedButton(
+                ),
+                Expanded(child: SizedBox()),
+                Padding(
+                  padding: const EdgeInsets.only(right: 5),
+                  child: ElevatedButton(
                       onPressed:() async{
                         await _savePdf(t);
                         ScaffoldMessenger(child: Text('Genereated'),);
@@ -308,84 +310,86 @@ class _ReportPageState extends State<ReportPage> {
                       ),
                       child: Text('Save')
                   ),
-                ],
+                ),
+              ],
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: ListView.separated(
+                  physics: NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: t.length,
+                  itemBuilder: (context, index) {
+                    final transaction = t[index];
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 4,
+                            offset: Offset(0, 3), // changes position of shadow
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                        title: Text(
+                          DateFormat('dd MMM, hh:mm').format(DateTime.fromMicrosecondsSinceEpoch(transaction.dateTime)),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.0,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Balance: ${transaction.balance.toString()}',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              'Detail: ${transaction.details}',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                color: Colors.grey[600],
+                              ),
+                            )
+                          ],
+                        ),
+                        trailing: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Credit: ${transaction.type == "Credit" ? transaction.amount.toString() : "0"}',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              'Debit: ${transaction.type == "Debit" ? transaction.amount.toString() : "0"}',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                        
+                  }, separatorBuilder: ( context,  index) =>SizedBox(height: 10,),
+                ),
               ),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: t.length,
-                itemBuilder: (context, index) {
-                  final transaction = t[index];
-                  return Container(
-                    margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    padding: EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Column for date
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                DateFormat('dd MMM, hh:mm').format(DateTime.fromMicrosecondsSinceEpoch(transaction.dateTime)),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16.0,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                'Balance: ${transaction.balance.toString()}',
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              Text(
-                                'Detail: ${transaction.details.toString()}',
-                                style: TextStyle(
-                                  fontSize: 14.0,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Column for balance
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'Credit: ${transaction.type == "Credit" ? transaction.amount.toString() : "0"}',
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
-                        // Column for credit and debit
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'Debit: ${transaction.type == "Debit" ? transaction.amount.toString() : "0"}',
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              )
-            ],
-          )
-
+            )
+          ],
         ),
       ),
     );
