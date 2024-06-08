@@ -156,23 +156,14 @@ class _ReportPageState extends State<ReportPage> {
       ),
     );
     Directory generalDownloadDir = Directory('/storage/emulated/0/Download');
-    final file = File('${generalDownloadDir.path}/KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf');
+    final file = File('${generalDownloadDir.path}/KhathaStatement_${DateTime.now().millisecondsSinceEpoch}.pdf');
     await file.writeAsBytes(await pdf.save());
-    // final fileUri = Uri.file('${generalDownloadDir!.path}/KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf');
-    // final taskId = await FlutterDownloader.enqueue(
-    //   url: 'data:application/pdf;base64,${base64Encode(await pdf.save())}',
-    //   savedDir: generalDownloadDir.path,
-    //   fileName: 'KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf',
-    //   showNotification: true,
-    //   openFileFromNotification: true,
-    // );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Pdf saved at ${generalDownloadDir.path}'),
+        content: Text('Pdf saved at ${generalDownloadDir.path}. \nfile name:KhathaStatement_${DateTime.now().microsecondsSinceEpoch}.pdf'),
       ),
     );
-
     // Optionally, you can print the path to the saved PDF file
     // print('PDF saved to: ${file.path}');
   }

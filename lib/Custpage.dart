@@ -31,87 +31,18 @@ class _CustpageState extends State<Custpage> {
     DropdownMenuItem(child: Text("You received"), value: "Credit"),
     DropdownMenuItem(child: Text("You paid"), value: "Debit"),
   ];
-  void showdia(BuildContext context) {
-    showDialog(
+  Future<void> showdia(BuildContext context) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => AddTransactionDialog(
-        amcon: amcon,
-        decon: decon,
-        onTypeChanged: (value) {
-          setState(() {
-            type = value;
-          });
-        },
-        onDateTimeChanged: (value) {
-          setState(() {
-            selectedDateTime = value;
-          });
-        },
-        onSubmit: () {
-          setState(() {
-            setState(() {
-
-              if (type == 'Credit') {
-                widget.customer.balance -= double.parse(amcon.text);
-              }
-              else {
-                widget.customer.balance += double.parse(amcon.text);
-              }
-              // Create a new list with updated transactions
-              List<Transactions> updatedTransactions = List.from(
-                  widget.customer.trans);
-              updatedTransactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-              double balance2=0,amou=double.parse(amcon.text);
-              for(int i=0;i<updatedTransactions.length;i++){
-                if(updatedTransactions[i].dateTime<selectedDateTime.microsecondsSinceEpoch){
-                  balance2=updatedTransactions[i].balance;
-                  break;
-                }
-              }
-              if(type=='Credit'){
-                balance2-=double.parse(amcon.text);
-              }
-              else{
-                balance2+=double.parse(amcon.text);
-              }
-              updatedTransactions.add(
-                Transactions(
-                  amount: double.parse(amcon.text),
-                  type: type,
-                  dateTime: selectedDateTime.microsecondsSinceEpoch,
-                  details: decon.text,
-                  balance: balance2,
-                ),
-              );
-              for(int i=0;i<updatedTransactions.length;i++){
-                if(updatedTransactions[i].dateTime>selectedDateTime.microsecondsSinceEpoch){
-                  if(type=='Credit'){
-                    updatedTransactions[i].balance-=amou;
-                  }
-                  else{
-                    updatedTransactions[i].balance+=amou;
-                  }
-                }
-              }
-
-              // Update the state with the new list
-              widget.customer.trans = updatedTransactions;
-              // Save updated customer details
-
-              CustomerStorage.saveCustomerDetails(widget.customer);
-              amcon.clear();
-              decon.clear();
-            });
-
-            // Update customer details, save to storage, etc.
-            // Clear text controllers
-            amcon.clear();
-            decon.clear();
-          });
-          Navigator.pop(context); // Close the dialog after submission
-        },
+        customer: widget.customer, edit: false,
       ),
     );
+
+    // Handle the result
+    if (result == true) {
+      setState(() {});
+    }
   }
 
   void deletedialog(int index){
@@ -178,7 +109,20 @@ class _CustpageState extends State<Custpage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TextButton(
-                          onPressed: (){},
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            final result = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AddTransactionDialog(
+                                customer: widget.customer, edit: true,index: index,
+                              ),
+                            );
+
+                            // Handle the result
+                            if (result == true) {
+                              setState(() {});
+                            }
+                          },
                           child: Text('Edit')
                       ),
                       TextButton(
@@ -250,6 +194,7 @@ class _CustpageState extends State<Custpage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: 5,),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -264,15 +209,18 @@ class _CustpageState extends State<Custpage> {
             ),
             Container(
               color: Colors.white,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(customer: widget.customer)));
-                },
-                child: Row(
-                  children: [
-                    Icon(Icons.picture_as_pdf),
-                    Text('Report'),
-                  ],
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(customer: widget.customer)));
+                  },
+                  child: Row(
+                    children: [
+                      Icon(Icons.picture_as_pdf),
+                      Text('Report'),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -370,12 +318,24 @@ class _CustpageState extends State<Custpage> {
                                 fontSize: 16.0,
                               ),
                             ),
-                            subtitle: Text(
-                              'Balance: ${transaction.balance.toString()}',
-                              style: TextStyle(
-                                fontSize: 14.0,
-                                color: Colors.grey[600],
-                              ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Balance: ${transaction.balance.toString()}',
+                                  style: TextStyle(
+                                    fontSize: 14.0,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Text(
+                                  'Detail: ${transaction.details.toString()}',
+                                  style: TextStyle(
+                                    fontSize: 14.0,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,

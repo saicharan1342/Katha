@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class AddTransactionDialog extends StatefulWidget {
-  final TextEditingController amcon;
-  final TextEditingController decon;
-  final Function(String) onTypeChanged;
-  final Function(DateTime) onDateTimeChanged;
-  final VoidCallback onSubmit;
+import 'SaveCust.dart';
+import 'Transactions.dart';
+import 'customers.dart';
 
+class AddTransactionDialog extends StatefulWidget {
+  final Customers customer;
+  final bool edit;
+  final int? index;
   const AddTransactionDialog({
-    required this.amcon,
-    required this.decon,
-    required this.onTypeChanged,
-    required this.onDateTimeChanged,
-    required this.onSubmit,
+    required this.customer,
+    required this.edit,
+    this.index,
+    super.key
   });
 
   @override
@@ -21,15 +21,47 @@ class AddTransactionDialog extends StatefulWidget {
 }
 
 class _AddTransactionDialogState extends State<AddTransactionDialog> {
-  late DateTime selectedDateTime;
-  late String type;
+  var type;
+
+  late DateTime selectedDateTime ;
+  var amcon=TextEditingController();
+  var typecon=TextEditingController();
+  var decon=TextEditingController();
+  late int selectedIndex ;// Assuming widget.index is declared as int?
 
   @override
   void initState() {
     super.initState();
     selectedDateTime = DateTime.now();
+    selectedIndex = widget.index!; // Assuming widget.index is declared as int?
+
     type = 'Select';
+    if(widget.edit==true){
+      amcon.text = (widget.index != null && widget.customer.trans[widget.index!] != null)
+          ? widget.customer.trans[widget.index!].amount.toString()
+          : '';
+      type=(widget.index != null && widget.customer.trans[widget.index!] != null)
+          ? widget.customer.trans[widget.index!].type
+          : 'Select';
+      decon.text=(widget.index != null && widget.customer.trans[widget.index!] != null)
+          ? widget.customer.trans[widget.index!].details
+          : '';
+      selectedDateTime = DateTime.fromMicrosecondsSinceEpoch(
+        (widget.index != null && widget.customer.trans[widget.index!] != null)
+            ? widget.customer.trans[widget.index!].dateTime
+            : DateTime.now().microsecondsSinceEpoch,
+      );
+
+    }
   }
+
+  void onTypeChanged(value){
+    setState(() {
+      type=value;
+    });
+  }
+
+
 
   Future<void> _selectDateTime(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
@@ -55,9 +87,89 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             pickedTime.minute,
           );
         });
-        widget.onDateTimeChanged(selectedDateTime);
       }
     }
+  }
+
+  onSubmit(){
+    setState(() {
+      setState(() {
+
+        if(widget.edit && widget.index!=null){
+          if(widget.customer.trans[selectedIndex].type=='Credit'){
+            widget.customer.balance+=widget.customer.trans[selectedIndex].amount;
+            for(int i=0;i<selectedIndex;i++){
+              widget.customer.trans[i].balance+=widget.customer.trans[selectedIndex].amount;
+            }
+          }
+          else{
+            widget.customer.balance-=widget.customer.trans[selectedIndex].amount;
+            for(int i=0;i<selectedIndex;i++){
+              widget.customer.trans[i].balance-=widget.customer.trans[selectedIndex].amount;
+            }
+          }
+          widget.customer.trans.removeAt(selectedIndex);
+          CustomerStorage.saveCustomerDetails(widget.customer);
+        }
+
+        if (type == 'Credit') {
+          widget.customer.balance -= double.parse(amcon.text);
+        }
+        else {
+          widget.customer.balance += double.parse(amcon.text);
+        }
+        // Create a new list with updated transactions
+        List<Transactions> updatedTransactions = List.from(
+            widget.customer.trans);
+        updatedTransactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        double balance2=0,amou=double.parse(amcon.text);
+        for(int i=0;i<updatedTransactions.length;i++){
+          if(updatedTransactions[i].dateTime<selectedDateTime.microsecondsSinceEpoch){
+            balance2=updatedTransactions[i].balance;
+            break;
+          }
+        }
+        if(type=='Credit'){
+          balance2-=double.parse(amcon.text);
+        }
+        else{
+          balance2+=double.parse(amcon.text);
+        }
+        updatedTransactions.add(
+          Transactions(
+            amount: double.parse(amcon.text),
+            type: type,
+            dateTime: selectedDateTime.microsecondsSinceEpoch,
+            details: decon.text,
+            balance: balance2,
+          ),
+        );
+        for(int i=0;i<updatedTransactions.length;i++){
+          if(updatedTransactions[i].dateTime>selectedDateTime.microsecondsSinceEpoch){
+            if(type=='Credit'){
+              updatedTransactions[i].balance-=amou;
+            }
+            else{
+              updatedTransactions[i].balance+=amou;
+            }
+          }
+        }
+
+        // Update the state with the new list
+        widget.customer.trans = updatedTransactions;
+        // Save updated customer details
+
+        CustomerStorage.saveCustomerDetails(widget.customer);
+        amcon.clear();
+        decon.clear();
+      });
+
+      // Update customer details, save to storage, etc.
+      // Clear text controllers
+      amcon.clear();
+      decon.clear();
+    });
+    Navigator.pop(context,true);
   }
 
   @override
@@ -67,7 +179,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
         child: Column(
           children: [
             TextFormField(
-              controller: widget.amcon,
+              controller: amcon,
               decoration: const InputDecoration(label: Text('Amount')),
               keyboardType: TextInputType.phone,
               validator: (value) {
@@ -79,11 +191,11 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               autovalidateMode: AutovalidateMode.always,
             ),
             TextFormField(
-              controller: widget.decon,
+              controller: decon,
               decoration: const InputDecoration(label: Text('Details')),
             ),
             DropdownButtonFormField(
-              value: 'Select',
+              value:type,
               items: [
                 DropdownMenuItem(child: Text("Select"), value: "Select"),
                 DropdownMenuItem(child: Text("You received"), value: "Credit"),
@@ -98,7 +210,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               onChanged: (value) {
                 setState(() {
                   type = value!;
-                  widget.onTypeChanged(type);
+                  onTypeChanged(type);
                 });
               },
               autovalidateMode: AutovalidateMode.always,
@@ -116,7 +228,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
               child: Text(DateFormat('dd-MM-yyyy HH:mm').format(selectedDateTime)),
             ),
             ElevatedButton(
-              onPressed: widget.onSubmit,
+              onPressed:onSubmit,
               child: Text("Submit"),
             )
           ],
