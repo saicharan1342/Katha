@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:kt/Dashboard.dart';
 import 'package:kt/Login.dart';
 import 'package:kt/Signup.dart';
-
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 
 Future<void> main() async {
@@ -11,6 +12,8 @@ Future<void> main() async {
   //     debug: true, // optional: set to false to disable printing logs to console (default: true)
   //     ignoreSsl: true // option: set to false to disable working with http links (default: false)
   // );
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -41,7 +44,7 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
       home: Dashboard()

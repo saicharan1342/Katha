@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:kt/Addtrans.dart';
 import 'package:kt/Custdepage.dart';
@@ -24,34 +24,6 @@ class _CustpageState extends State<Custpage> {
   var amcon=TextEditingController();
   var typecon=TextEditingController();
   var decon=TextEditingController();
-
-  Future<void> _selectDateTime(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDateTime,
-      firstDate: DateTime(2015, 8),
-      lastDate: DateTime(2101),
-    );
-
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(selectedDateTime),
-      );
-
-      if (pickedTime != null) {
-        setState(() {
-          selectedDateTime = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
-    }
-  }
 
 
   List<DropdownMenuItem<String>> menuItems = [
@@ -142,7 +114,89 @@ class _CustpageState extends State<Custpage> {
     );
   }
 
+  void deletedialog(int index){
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Text('Are you sure?'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
 
+                          if(widget.customer.trans[index].type=='Credit'){
+                            widget.customer.balance+=widget.customer.trans[index].amount;
+                            for(int i=0;i<index;i++){
+                              widget.customer.trans[i].balance+=widget.customer.trans[index].amount;
+                            }
+                          }
+                          else{
+                            widget.customer.balance-=widget.customer.trans[index].amount;
+                            for(int i=0;i<index;i++){
+                              widget.customer.trans[i].balance-=widget.customer.trans[index].amount;
+                            }
+                          }
+                          widget.customer.trans.removeAt(index);
+                          CustomerStorage.saveCustomerDetails(widget.customer);
+
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Delete'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  void editdialog(int index){
+    showDialog(
+        context: context,
+        builder: (context){
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child:Column(
+                children: [
+                  Text('Edit?'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                          onPressed: (){},
+                          child: Text('Edit')
+                      ),
+                      TextButton(
+                          onPressed: (){
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Cancel')
+                      )
+                    ],
+                  )
+                ],
+              ),
+            ),
+          );
+        }
+    );
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -236,13 +290,24 @@ class _CustpageState extends State<Custpage> {
                       final transaction = widget.customer.trans[index];
                       return Dismissible(
                         key: Key(transaction.dateTime.toString()),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          child: Align(
+                        direction: DismissDirection.horizontal,
+                        secondaryBackground: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                spreadRadius: 2,
+                                blurRadius: 4,
+                                offset: Offset(0, 3), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: const Align(
                             alignment: Alignment.centerRight,
                             child: Padding(
-                              padding: const EdgeInsets.all(10),
+                              padding: EdgeInsets.all(10),
                               child: Icon(
                                 Icons.delete,
                                 color: Colors.white,
@@ -250,61 +315,38 @@ class _CustpageState extends State<Custpage> {
                             ),
                           ),
                         ),
+                        background: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(10.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                spreadRadius: 2,
+                                blurRadius: 4,
+                                offset: Offset(0, 3), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
                         confirmDismiss: (direction) async {
-                          return showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                content: SingleChildScrollView(
-                                  child: Column(
-                                    children: [
-                                      const Text('Are you sure?'),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () {
-                                              setState(() {
-
-                                                if(widget.customer.trans[index].type=='Credit'){
-                                                  widget.customer.balance+=widget.customer.trans[index].amount;
-                                                  for(int i=0;i<index;i++){
-                                                    widget.customer.trans[i].balance+=widget.customer.trans[index].amount;
-                                                  }
-                                                }
-                                                else{
-                                                  widget.customer.balance-=widget.customer.trans[index].amount;
-                                                  for(int i=0;i<index;i++){
-                                                    widget.customer.trans[i].balance-=widget.customer.trans[index].amount;
-                                                  }
-                                                }
-                                                widget.customer.trans.removeAt(index);
-                                                CustomerStorage.saveCustomerDetails(widget.customer);
-
-                                              });
-                                              Navigator.pop(context);
-                                            },
-                                            child: const Text('Delete'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: const Text('Cancel'),
-                                          )
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                        onDismissed: (direction) {
-                          setState(() {
-                            // Your dismissal logic here
-                          });
+                          if(direction==DismissDirection.endToStart){
+                             deletedialog(index);
+                          }
+                          else if(direction==DismissDirection.startToEnd){
+                            editdialog(index);
+                          }
+                          return null;
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -357,11 +399,10 @@ class _CustpageState extends State<Custpage> {
                             ),
                           ),
                         )
-
                       );
-                                        },
-                                      ),
-                    ),
+                      },
+                      ),
+                ),
               ),
             ),
           ],

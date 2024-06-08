@@ -80,7 +80,39 @@ class _CustdetailState extends State<Custdetail> {
           ),
           IconButton(
             icon: Icon(Icons.delete),
-            onPressed: ()=>_deleteCustomer(widget.customer.name),
+            onPressed: (){
+              showDialog(
+                  context: context,
+                  builder: (context){
+                    return AlertDialog(
+                      content:SingleChildScrollView(
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Text('Are you sure?'),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  TextButton(
+                                      onPressed: ()=>_deleteCustomer(widget.customer.name),
+                                      child: Text('Delete')
+                                  ),
+                                  TextButton(
+                                      onPressed: (){
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text('Cancel')
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      ) ,
+                    );
+                  }
+              );
+            },
           ),
         ],
       ),
